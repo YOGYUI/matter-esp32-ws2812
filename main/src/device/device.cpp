@@ -5,6 +5,8 @@
 CDevice::CDevice()
 {
     m_state_onoff = false;
+    m_endpoint = nullptr;
+    m_endpoint_id = 0;
 }
 
 CDevice::~CDevice()
@@ -14,6 +16,25 @@ CDevice::~CDevice()
 
 bool CDevice::matter_add_endpoint()
 {
+    esp_err_t ret;
+    
+    if (m_endpoint != nullptr) {
+        matter_init_endpoint();
+
+        // get endpoint id
+        m_endpoint_id = esp_matter::endpoint::get_id(m_endpoint);
+
+        ret = esp_matter::endpoint::enable(m_endpoint);  // should be called after esp_matter::start()
+        if (ret != ESP_OK) {
+            GetLogger(eLogType::Error)->Log("Failed to enable endpoint (%d, ret=%d)", m_endpoint_id, ret);
+            matter_destroy_endpoint();
+            return false;
+        }
+    } else {
+        GetLogger(eLogType::Error)->Log("endpoint instance is null!");
+        return false;
+    }
+
     return true;
 }
 
@@ -54,4 +75,9 @@ void CDevice::matter_on_change_attribute_value(esp_matter::attribute::callback_t
 void CDevice::matter_update_all_attribute_values()
 {
 
+}
+
+void CDevice::toggle_state_action()
+{
+    
 }

@@ -23,7 +23,7 @@ bool CDeviceOnOffLight::matter_add_endpoint()
         return false;
     }
 
-    return true;
+    return CDevice::matter_add_endpoint();;
 }
 
 bool CDeviceOnOffLight::matter_init_endpoint()
@@ -75,4 +75,16 @@ void CDeviceOnOffLight::matter_update_clus_onoff_attr_onoff()
     if (ret != ESP_OK) {
         GetLogger(eLogType::Error)->Log("Failed to update attribute (%d)", ret);
     }
+}
+
+void CDeviceOnOffLight::toggle_state_action()
+{
+    if (m_state_onoff) {
+        GetWS2812Ctrl()->set_brightness(0);
+        m_state_onoff = false;
+    } else {
+        GetWS2812Ctrl()->set_brightness(100);
+        m_state_onoff = true;
+    }
+    matter_update_clus_onoff_attr_onoff();
 }

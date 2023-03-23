@@ -35,6 +35,7 @@ public:
     uint16_t matter_get_setup_discriminator();
 
     CDevice* find_device_by_endpoint_id(uint16_t endpoint_id);
+    void toggle_device_state_action();
 
 private:
     static CSystem* _instance;

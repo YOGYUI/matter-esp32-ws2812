@@ -19,6 +19,9 @@ public:
     ) override;
     void matter_update_all_attribute_values() override;
 
+public:
+    void toggle_state_action() override;
+
 private:
     bool m_matter_update_by_client_clus_onoff_attr_onoff;
 

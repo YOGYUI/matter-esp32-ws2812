@@ -81,6 +81,14 @@ bool CWS2812Ctrl::initialize(uint8_t gpio_pin_no, uint16_t pixel_cnt)
     
     ledc_channel_config(&ledc_ch_cfg);
 
+    uint8_t brightness = 0;
+    GetMemory()->load_ws2812_brightness(&brightness);
+    set_brightness(brightness);
+
+    uint8_t red = 0, green = 0, blue = 0;
+    GetMemory()->load_ws2812_color(&red, &green, &blue);
+    set_common_color(red, green, blue);
+
     return true;
 }
 

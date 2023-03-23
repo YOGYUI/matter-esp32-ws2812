@@ -7,6 +7,7 @@
 #include <esp_matter_bridge.h>
 #include <esp_matter_feature.h>
 #include <esp_netif.h>
+#include "ws2812.h"
 #include "device_onoff_light.h"
 
 CSystem* CSystem::_instance = nullptr;
@@ -80,6 +81,7 @@ bool CSystem::initialize()
     esp_matter::console::diagnostics_register_commands();
     esp_matter::console::init();
 
+    GetWS2812Ctrl()->initialize(GPIO_PIN_WS2812_DATA, WS2812_ARRAY_COUNT);
     // set matter endpoints
     CDeviceOnOffLight *dev = new CDeviceOnOffLight();
     if (dev && dev->matter_add_endpoint()) {
@@ -113,6 +115,7 @@ void CSystem::callback_default_button(void *arg, void *data)
         break;
     case BUTTON_SINGLE_CLICK:   // 4
         _instance->print_system_info();
+        _instance->toggle_device_state_action();
         break;
     case BUTTON_DOUBLE_CLICK:   // 5
         _instance->print_matter_endpoints_info();
@@ -340,6 +343,13 @@ CDevice* CSystem::find_device_by_endpoint_id(uint16_t endpoint_id)
     }
 
     return nullptr;
+}
+
+void CSystem::toggle_device_state_action()
+{
+    for (auto & dev : m_device_list) {
+        dev->toggle_state_action();
+    }
 }
 
 void CSystem::matter_event_callback(const ChipDeviceEvent *event, intptr_t arg)

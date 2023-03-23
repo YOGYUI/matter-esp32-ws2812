@@ -31,6 +31,9 @@ public:
         esp_matter_attr_val_t *value
     );
     virtual void matter_update_all_attribute_values();
+
+public:
+    virtual void toggle_state_action();
 };
 
 #endif
