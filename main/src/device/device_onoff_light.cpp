@@ -35,22 +35,22 @@ bool CDeviceOnOffLight::matter_init_endpoint()
 
 void CDeviceOnOffLight::matter_on_change_attribute_value(esp_matter::attribute::callback_type_t type, uint32_t cluster_id, uint32_t attribute_id, esp_matter_attr_val_t *value)
 {
-    if (cluster_id == chip::app::Clusters::OnOff::Id) {
-        if (attribute_id == chip::app::Clusters::OnOff::Attributes::OnOff::Id) {
-            if (type == esp_matter::attribute::callback_type_t::PRE_UPDATE) {
+    if (type == esp_matter::attribute::callback_type_t::PRE_UPDATE) {
+        if (cluster_id == chip::app::Clusters::OnOff::Id) {
+            if (attribute_id == chip::app::Clusters::OnOff::Attributes::OnOff::Id) {
                 GetLogger(eLogType::Info)->Log("MATTER::PRE_UPDATE >> cluster: OnOff(0x%04X), attribute: OnOff(0x%04X), value: %d", cluster_id, attribute_id, value->val.b);
                 if (!m_matter_update_by_client_clus_onoff_attr_onoff) {
                     if (value->val.b) {
                         GetWS2812Ctrl()->set_brightness(100);
+                        m_state_onoff = true;
                     } else {
                         GetWS2812Ctrl()->set_brightness(0);
+                        m_state_onoff = false;
                     }
                 } else {
-                    GetLogger(eLogType::Info)->Log("Attribute is updated by this device");
+                    // GetLogger(eLogType::Info)->Log("Attribute is updated by this device");
                     m_matter_update_by_client_clus_onoff_attr_onoff = false;
                 }
-            } else if (type == esp_matter::attribute::callback_type_t::POST_UPDATE) {
-                GetLogger(eLogType::Info)->Log("MATTER::POST_UPDATE >> cluster: OnOff(0x%04X), attribute: OnOff(0x%04X), value: %d", cluster_id, attribute_id, value->val.b);
             }
         }
     }

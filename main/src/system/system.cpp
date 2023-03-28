@@ -9,6 +9,7 @@
 #include <esp_netif.h>
 #include "ws2812.h"
 #include "device_onoff_light.h"
+#include "device_levelcontrol_light.h"
 
 CSystem* CSystem::_instance = nullptr;
 bool CSystem::m_default_btn_pressed_long = false;
@@ -83,9 +84,16 @@ bool CSystem::initialize()
 
     GetWS2812Ctrl()->initialize(GPIO_PIN_WS2812_DATA, WS2812_ARRAY_COUNT);
     // set matter endpoints
-    CDeviceOnOffLight *dev = new CDeviceOnOffLight();
+    CDevice *dev = nullptr;
+#if LIGHT_TYPE == 0
+    dev = new CDeviceOnOffLight();
+#elif LIGHT_TYPE == 1
+    dev = new CDeviceLevelControlLight();
+#endif
     if (dev && dev->matter_add_endpoint()) {
         m_device_list.push_back(dev);
+    } else {
+        return false;
     }
 
     GetLogger(eLogType::Info)->Log("System Initialized");

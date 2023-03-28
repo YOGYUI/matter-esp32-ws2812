@@ -17,6 +17,7 @@ protected:
     esp_matter::endpoint_t *m_endpoint;
     uint16_t m_endpoint_id;
     bool m_state_onoff;
+    uint8_t m_state_brightness;
 
 public:
     virtual bool matter_add_endpoint();

@@ -226,7 +226,12 @@ bool CWS2812Ctrl::set_brightness(uint8_t value, bool save_memory/*=true*/,  bool
         GetMemory()->save_ws2812_brightness(value);
     }
 
-    uint32_t duty = (uint32_t)((double)value / 100. * LED_PWM_DUTY_MAX);
+    uint32_t duty;
+    if (value) {
+        duty = (uint32_t)((double)value / 255. * (LED_PWM_DUTY_MAX - LED_PWM_DUTY_MIN) + LED_PWM_DUTY_MIN);
+    } else {
+        duty = 0;
+    }
     return set_pwm_duty(duty, verbose);
 }
 
