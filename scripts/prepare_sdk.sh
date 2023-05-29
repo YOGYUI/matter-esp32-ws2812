@@ -9,17 +9,19 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else 
     project_path=$(dirname $(dirname $(realpath $BASH_SOURCE)))
 fi
-esp_idf_path=${project_path}/sdk/esp-idf
-esp_matter_path=${project_path}/sdk/esp-matter
+# sdk_path=${project_path}/sdk
+sdk_path=~/tools  # change to your own sdk path
+esp_idf_path=${sdk_path}/esp-idf
+esp_matter_path=${sdk_path}/esp-matter
 chip_path=${esp_matter_path}/connectedhomeip/connectedhomeip
+zap_path=${sdk_path}/esp-matter/.zap
 
-if [ -z "$IDF_PATH" ]; then
-  source ${esp_idf_path}/export.sh
-fi
+source ${esp_idf_path}/export.sh
 source ${esp_matter_path}/export.sh
 export IDF_CCACHE_ENABLE=1
 
 # (optional) print git commit id of repositories
+echo "------------------------------------------------------"
 echo "[esp-idf]"
 cd ${esp_idf_path}
 git rev-parse HEAD
@@ -32,5 +34,9 @@ echo "[connectedhomeip]"
 cd ${chip_path}
 git rev-parse HEAD
 git describe --tags
+echo "[zap-cli]"
+cd ${zap_path}
+./zap-cli --version
+echo "------------------------------------------------------"
 
 cd ${cur_path}

@@ -7,17 +7,14 @@ Matter 조명(Light) 예제 프로젝트<br>
 
 SDK
 ---
-- esp-idf: [v4.4.3](https://github.com/espressif/esp-idf/tree/v4.4.3)
-- esp-matter: [latest commit](https://github.com/espressif/esp-matter)
-- connectedhomeip: [v1.0.0.2](https://github.com/espressif/connectedhomeip/tree/v1.0.0.2)
+- esp-idf: [v5.0.1](https://github.com/espressif/esp-idf/tree/v5.0.1)
+- esp-matter: [505bbb517680cb3c68139842718da40ba007a663](https://github.com/espressif/esp-matter/commit/505bbb517680cb3c68139842718da40ba007a663)
+- connectedhomeip: [82db97695c2c899cc130c2d6a0d72b3c92c144db](https://github.com/project-chip/connectedhomeip/commit/82db97695c2c899cc130c2d6a0d72b3c92c144db)
+  - Matter 1.1 released (2023.05.18)
 
 Helper Script
 ---
-esp-idf, esp-matter 및 connectedhomeip 소스코드 클론
-```shell
-git submodule update --init --depth 1
-```
-SDK 내부 서브모듈 클론 및 설치
+SDK 클론 및 설치
 ```shell
 source ./scripts/install_sdk.sh
 ```
@@ -49,3 +46,4 @@ QR Code for commisioning
 References
 ---
 [Matter::OnOff 클러스터 예제 (ESP32)](https://yogyui.tistory.com/entry/PROJ-MatterOn-Off-Light-%ED%81%B4%EB%9F%AC%EC%8A%A4%ED%84%B0-%EC%98%88%EC%A0%9C-ESP32)<br>
+[Matter::LevelControl 클러스터 예제 (ESP32)](https://yogyui.tistory.com/entry/PROJ-MatterLevelControl-%ED%81%B4%EB%9F%AC%EC%8A%A4%ED%84%B0-%EA%B0%9C%EB%B0%9C-%EC%98%88%EC%A0%9C-ESP32)<br>

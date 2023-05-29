@@ -19,7 +19,6 @@ list(APPEND PRIV_REQUIRES_LIST
      esp_matter 
      esp_matter_bridge
      esp_matter_console 
-     route_hook 
      app_reset 
      json
 )

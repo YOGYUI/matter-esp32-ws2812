@@ -1,29 +1,21 @@
 {
     "configurations": [
         {
-            "name": "ESP-IDF",
+            "name": "ESP-MATTER",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "includePath": [
-                "${config:idf.espIdfPath}/components/**",
-                "${config:idf.espIdfPathWin}/components/**",
-                "${config:idf.espAdfPath}/components/**",
-                "${config:idf.espAdfPathWin}/components/**",
                 "${workspaceFolder}/**",
-				"${workspaceFolder}/sdk/esp-idf/**",
-                "${workspaceFolder}/sdk/esp-matter/**",
-				"${workspaceFolder}/sdk/esp-matter/connectedhomeip/connectedhomeip/**"
+				"~/tools/esp-idf/components/**",
+                "~/tools/esp-matter/components/**",
+				"~/tools/esp-matter/connectedhomeip/connectedhomeip/**"
             ],
             "browse": {
                 "path": [
-                    "${config:idf.espIdfPath}/components/**",
-                    "${config:idf.espIdfPathWin}/components/**",
-                    "${config:idf.espAdfPath}/components/**",
-                    "${config:idf.espAdfPathWin}/components/**",
                     "${workspaceFolder}/**",
-                    "${workspaceFolder}/sdk/esp-idf/**",
-					"${workspaceFolder}/sdk/esp-matter/**",
-					"${workspaceFolder}/sdk/esp-matter/connectedhomeip/connectedhomeip/**"
+                    "~/tools/esp-idf/components/**",
+					"~/tools/esp-matter/components/**",
+					"~/tools/esp-matter/connectedhomeip/connectedhomeip/**"
                 ],
                 "limitSymbolsToIncludedHeaders": false
             }

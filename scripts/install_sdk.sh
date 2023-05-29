@@ -10,33 +10,56 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else 
     project_path=$(dirname $(dirname $(realpath $BASH_SOURCE)))
 fi
-esp_idf_path=${project_path}/sdk/esp-idf
-esp_matter_path=${project_path}/sdk/esp-matter
+
+# sdk_path=${project_path}/sdk
+sdk_path=~/tools  # change to your own sdk path
+if ! [ -d "${sdk_path}" ]; then
+  mkdir ${sdk_path}
+fi
+
+esp_idf_path=${sdk_path}/esp-idf
+esp_matter_path=${sdk_path}/esp-matter
 
 # for Apple silicon
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:"/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:"/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+fi
 
-# prepare esp-idf
+# install esp-idf
+cd ${sdk_path}
+git clone --recursive https://github.com/espressif/esp-idf.git esp-idf
 cd ${esp_idf_path}
+git fetch --all --tags
+git checkout v5.0.1
 git submodule update --init --recursive
 bash ./install.sh
 
-# prepare esp-matter and CHIP
+# clone esp-matter repository and install connectedhomeip submodules      
+cd ${sdk_path}
+git clone --depth 1 https://github.com/espressif/esp-matter.git esp-matter
 cd ${esp_matter_path}
-git submodule update --init
-cd connectedhomeip/connectedhomeip
+git reset --hard b40bf8e398161bcac515fd57eb13d14e031e3a91
+git submodule update --init --depth 1
+cd ./connectedhomeip/connectedhomeip
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  ./scripts/checkout_submodules.py --platform esp32 darwin --shallow
+else
+  ./scripts/checkout_submodules.py --platform esp32 linux --shallow
+fi
 
-# optional: checkout another CHIP commit
-git fetch --all --tags
-git checkout tags/v1.0.0.2
-
-. ./scripts/activate.sh
-
+# install esp-matter and chip cores
 cd ${esp_matter_path}
-bash ./install.sh
+bash ./install.sh  # will call connectedhomeip "activate.sh"
 
-# maybe obsolete anymore...
-#source ${esp_idf_path}/export.sh
-#pip install lark stringcase
+source ${esp_idf_path}/export.sh
+pip install lark stringcase jinja2
+
+# create symbolic link
+cd ${project_path}
+if ! [ -d "${project_path}/sdk" ]; then
+  mkdir ${project_path}/sdk
+fi
+ln -s ${esp_idf_path} ${project_path}/sdk/esp-idf
+ln -s ${esp_matter_path} ${project_path}/sdk/esp-matter
 
 cd ${cur_path}

@@ -17,18 +17,26 @@
 
 #define WS2812_ARRAY_COUNT      16
 #define WS2812_REFRESH_TIME_MS  100
-#define LED_PWM_FREQUENCY       50000
-#define LED_PWM_DUTY_MAX        400
-#define LED_PWM_DUTY_MIN        50
+#define LED_PWM_FREQUENCY       100
+#define LED_PWM_DUTY_MAX        150
+#define LED_PWM_DUTY_MIN        40
 #define LED_SET_ALL             -1
 
 #define TASK_STACK_DEPTH        4096
 #define TASK_PRIORITY_WS2812    2
 
 /**
- 0 = on/off
- 1 = level control
+ * 0 = on/off
+ * 1 = level control
+ * 2 = color control
  */
 #define LIGHT_TYPE  1
+
+/**
+ * 0 = Hue and Saturation
+ * 1 = X and Y
+ * 2 = Temperature
+ */
+#define COLOR_MODE  0
 
 #endif

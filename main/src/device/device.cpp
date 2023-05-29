@@ -6,6 +6,8 @@ CDevice::CDevice()
 {
     m_state_onoff = false;
     m_state_brightness = 0;
+    m_state_hue = 0;
+    m_state_saturation = 0;
     m_endpoint = nullptr;
     m_endpoint_id = 0;
 }

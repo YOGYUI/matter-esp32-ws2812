@@ -12,7 +12,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else 
     project_path=$(dirname $(dirname $(realpath $BASH_SOURCE)))
 fi
-esp_idf_path=${project_path}/sdk/esp-idf
+# sdk_path=${project_path}/sdk
+sdk_path=~/tools  # change to your own sdk path
+esp_idf_path=${sdk_path}/esp-idf
 
 port_arg=0
 idf_path_arg=0

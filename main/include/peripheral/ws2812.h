@@ -16,7 +16,17 @@ typedef struct st_rgb
         g = green;
         b = blue;
     }
-} RGB;
+} RGB_t;
+
+typedef struct st_hue_saturation
+{
+    uint16_t hue;
+    uint8_t saturation;
+    st_hue_saturation(uint16_t h = 0, uint8_t s = 0) {
+        hue = h;
+        saturation = s;
+    }
+} HS_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,8 +48,12 @@ public:
     bool set_brightness(uint8_t value, bool save_memory = true, bool verbose = true);
     uint8_t get_brightness();
     
-    RGB get_common_color();
+    RGB_t get_common_color();
     bool set_common_color(uint8_t red, uint8_t green, uint8_t blue, bool save_memory = true);
+
+    bool set_hue(uint16_t hue);
+    bool set_saturation(uint8_t saturation);
+    bool set_temperature(uint32_t temperature);
 
     bool blink(uint32_t duration_ms = 1000, uint32_t count = 1);
     bool blink_demo();
@@ -50,8 +64,9 @@ private:
     uint8_t m_gpio_pin_no;
     uint8_t m_brightness;
     
-    RGB m_common_color;
-    std::vector<RGB> m_pixel_values;
+    RGB_t m_common_color;
+    HS_t m_hue_saturation;
+    std::vector<RGB_t> m_pixel_values;
     std::vector<uint32_t> m_pixel_conv_values;
     
     uint32_t m_blink_duration_ms;

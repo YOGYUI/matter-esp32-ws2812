@@ -2,14 +2,21 @@
 #include "logger.h"
 #include "memory.h"
 #include "definition.h"
+#include "util.h"
+#include "cJSON.h"
 #include <nvs_flash.h>
 #include <esp_matter_core.cpp>  // include definition to config nvs
 #include <esp_matter_bridge.h>
 #include <esp_matter_feature.h>
 #include <esp_netif.h>
+#include <esp_mac.h>
+#include <esp_chip_info.h>
+#include <esp_flash.h>
+#include <esp_app_desc.h>
 #include "ws2812.h"
 #include "device_onoff_light.h"
 #include "device_levelcontrol_light.h"
+#include "device_colorcontrol_light.h"
 
 CSystem* CSystem::_instance = nullptr;
 bool CSystem::m_default_btn_pressed_long = false;
@@ -79,8 +86,8 @@ bool CSystem::initialize()
     GetLogger(eLogType::Info)->Log("Matter started");
 
     // enable chip shell
-    esp_matter::console::diagnostics_register_commands();
-    esp_matter::console::init();
+    // esp_matter::console::diagnostics_register_commands();
+    // esp_matter::console::init();
 
     GetWS2812Ctrl()->initialize(GPIO_PIN_WS2812_DATA, WS2812_ARRAY_COUNT);
     // set matter endpoints
@@ -89,6 +96,8 @@ bool CSystem::initialize()
     dev = new CDeviceOnOffLight();
 #elif LIGHT_TYPE == 1
     dev = new CDeviceLevelControlLight();
+#elif LIGHT_TYPE == 2
+    dev = new CDeviceColorControlLight();
 #endif
     if (dev && dev->matter_add_endpoint()) {
         m_device_list.push_back(dev);
@@ -98,6 +107,7 @@ bool CSystem::initialize()
 
     GetLogger(eLogType::Info)->Log("System Initialized");
     print_system_info();
+    // print_matter_endpoints_info();
 
     return true;
 }
@@ -246,17 +256,45 @@ void CSystem::factory_reset()
 
 void CSystem::print_system_info()
 {
+    GetLogger(eLogType::Info)->Log("System Info");
+
+    // ESP32 specific
+    GetLoggerM(eLogType::Info)->Log("----- ESP32 -----");
+    auto desc = esp_app_get_description();
+    GetLoggerM(eLogType::Info)->Log("Project Name: %s", desc->project_name);
+    GetLoggerM(eLogType::Info)->Log("App Version: %s", desc->version);
+
+    esp_chip_info_t chip_info;
+    uint32_t flash_size;
+    esp_chip_info(&chip_info);
+    GetLoggerM(eLogType::Info)->Log("CPU Core(s): %d", chip_info.cores);
+    unsigned major_rev = chip_info.revision / 100;
+    unsigned minor_rev = chip_info.revision % 100;
+    GetLoggerM(eLogType::Info)->Log("Revision: %d.%d", major_rev, minor_rev);
+    if(esp_flash_get_size(NULL, &flash_size) == ESP_OK) {
+        float flash_size_mb = (float)flash_size / (1024.f * 1024.f);
+        GetLoggerM(eLogType::Info)->Log("Flash Size: %g MB (%s)", flash_size_mb, (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+    }
+    size_t heap_free_size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    GetLoggerM(eLogType::Info)->Log("Heap Free Size: %d", heap_free_size);
+
     // network interface
+    GetLoggerM(eLogType::Info)->Log("----- Network -----");
     esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");   // "WIFI_AP_DEF"
     esp_netif_ip_info_t ip_info;
     esp_netif_get_ip_info(netif, &ip_info);
-    GetLogger(eLogType::Info)->Log("IPv4 Address: %d.%d.%d.%d", IP2STR(&ip_info.ip));
-    GetLogger(eLogType::Info)->Log("Gateway: %d.%d.%d.%d", IP2STR(&ip_info.gw));
+    GetLoggerM(eLogType::Info)->Log("IPv4 Address: %d.%d.%d.%d", IP2STR(&ip_info.ip));
+    GetLoggerM(eLogType::Info)->Log("Gateway: %d.%d.%d.%d", IP2STR(&ip_info.gw));
+    unsigned char mac[6] = {0};
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    GetLoggerM(eLogType::Info)->Log("MAC Address: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
     // matter related information
-    GetLogger(eLogType::Info)->Log("Vendor ID: 0x%04X", matter_get_vendor_id());
-    GetLogger(eLogType::Info)->Log("Product ID: 0x%04X", matter_get_product_id());
-    GetLogger(eLogType::Info)->Log("Setup Passcode: %d", matter_get_setup_passcode());
-    GetLogger(eLogType::Info)->Log("Setup Discriminator: %d", matter_get_setup_discriminator());
+    GetLoggerM(eLogType::Info)->Log("----- Matter -----");
+    GetLoggerM(eLogType::Info)->Log("Vendor ID: 0x%04X", matter_get_vendor_id());
+    GetLoggerM(eLogType::Info)->Log("Product ID: 0x%04X", matter_get_product_id());
+    // GetLoggerM(eLogType::Info)->Log("Setup Passcode: %d", matter_get_setup_passcode());
+    GetLoggerM(eLogType::Info)->Log("Setup Discriminator: %d", matter_get_setup_discriminator());
 }
 
 void CSystem::print_matter_endpoints_info()
@@ -265,44 +303,16 @@ void CSystem::print_matter_endpoints_info()
         return;
 
     uint16_t endpoint_id;
-    uint32_t cluster_id, attr_id;
-    char attr_id_str_temp[7];
+    GetLogger(eLogType::Info)->Log("Matter Data Model Information");
     esp_matter::endpoint_t *endpoint = esp_matter::endpoint::get_first(m_root_node);
     while (endpoint != nullptr) {
         endpoint_id = esp_matter::endpoint::get_id(endpoint);
-        GetLogger(eLogType::Info)->Log(">> Endpoint 0x%02X", endpoint_id);
-        
-        uint8_t dev_type_count;
-        uint32_t *dev_type_ids = esp_matter::endpoint::get_device_type_ids(endpoint, &dev_type_count);
-        for (uint8_t cnt = 0; cnt < dev_type_count; cnt++) {
-            GetLogger(eLogType::Info)->Log("Device Type: 0x%04X", dev_type_ids[cnt]);
-        }
-
-        esp_matter::cluster_t *cluster = esp_matter::cluster::get_first(endpoint);
-        while (cluster != nullptr) {
-            cluster_id = esp_matter::cluster::get_id(cluster);
-            GetLogger(eLogType::Info)->Log(">>>> Cluster Id=0x%04X", cluster_id);
-
-            uint32_t feature_map_value = 0;
-            esp_matter::attribute_t *attr = esp_matter::attribute::get_first(cluster);
-            std::string str_attrs = ">>>>>> Attribute Ids=";
-            while (attr != nullptr) {
-                attr_id = esp_matter::attribute::get_id(attr);
-                if (attr_id == chip::app::Clusters::Globals::Attributes::FeatureMap::Id) {
-                    esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-                    esp_matter::attribute::get_val(attr, &val);
-                    feature_map_value = val.val.u32;
-                }
-                snprintf(attr_id_str_temp, 7, "0x%04X", attr_id);
-                str_attrs += std::string(attr_id_str_temp);
-                attr = esp_matter::attribute::get_next(attr);
-                if (attr) {
-                    str_attrs += ", ";
-                }
-            }
-            GetLogger(eLogType::Info)->Log("%s (feature_map_val=0x%04X)", str_attrs.c_str(), feature_map_value);
-            cluster = esp_matter::cluster::get_next(cluster);
-        }
+        cJSON *json = dump_matter_endpoint_info(endpoint_id);
+        char *string = cJSON_PrintUnformatted(json);
+        printf(string);
+        cJSON_Delete(json);
+        free(string);
+        printf("\n");
         endpoint = esp_matter::endpoint::get_next(endpoint);
     }
 }
@@ -414,9 +424,16 @@ esp_err_t CSystem::matter_attribute_update_callback(esp_matter::attribute::callb
      * After this API is called, the application gets the attribute update callback with `PRE_UPDATE`, then the
      * attribute is updated in the database, then the application get the callback with `POST_UPDATE`.
      */
-    GetLogger(eLogType::Info)->Log("attribute update callback > type: %d, endpoint_id: %d, cluster_id: 0x%04X, attribute_id: 0x%04X", 
-        type, endpoint_id, cluster_id, attribute_id);
-    
+    /*
+    char temp[64]{};
+    get_matter_value_string(*val, temp, sizeof(temp));
+    GetLogger(eLogType::Info)->Log("attribute update callback > type: %d, endpoint_id: %d, cluster_id: 0x%04X(%s), attribute_id: 0x%04X(%s) > value: %s", 
+        type, endpoint_id, cluster_id, get_matter_cluster_name(cluster_id), attribute_id, get_matter_attribute_name(cluster_id, attribute_id), temp);
+    */
+    /*
+    GetLogger(eLogType::Info)->Log("attribute update callback > type: %d, endpoint_id: %d, cluster_id: 0x%04X(%s), attribute_id: 0x%04X(%s)", 
+        type, endpoint_id, cluster_id, get_matter_cluster_name(cluster_id), attribute_id, get_matter_attribute_name(cluster_id, attribute_id));
+    */
     CDevice *device = GetSystem()->find_device_by_endpoint_id(endpoint_id);
     if (device){
         device->matter_on_change_attribute_value(type, cluster_id, attribute_id, val);

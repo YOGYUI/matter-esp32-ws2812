@@ -1,7 +1,9 @@
 #include "ws2812.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
-#include "driver/rmt.h"
+#include "driver/rmt_tx.h"
+// #include "driver/rmt_rx.h"
+#include "rom/gpio.h"
 #include "definition.h"
 #include "logger.h"
 #include "memory.h"
@@ -14,12 +16,93 @@ enum CMD_TYPE {
     BLINK_DEMO = 2,
 };
 
+static RGB_t convert_hue_saturation_to_rgb(HS_t hue_saturation) {
+    uint16_t hue = hue_saturation.hue % 360;
+    uint8_t saturation = hue_saturation.saturation;
+    uint16_t hi = (hue / 60) % 6;
+    uint16_t F = 100 * hue / 60 - 100 * hi;
+    uint16_t P = 255 * (100 - saturation) / 100;
+    uint16_t Q = 255 * (10000 - F * saturation) / 10000;
+    uint16_t T = 255 * (10000 - saturation * (100 - F)) / 10000;
+    RGB_t rgb;
+    switch (hi) {
+    case 0:
+        rgb.r = 255;
+        rgb.g = T;
+        rgb.b = P;
+        break;
+    case 1:
+        rgb.r = Q;
+        rgb.g = 255;
+        rgb.b = P;
+        break;
+    case 2:
+        rgb.r = P;
+        rgb.g = 255;
+        rgb.b = T;
+        break;
+    case 3:
+        rgb.r = P;
+        rgb.g = Q;
+        rgb.b = 255;
+        break;
+    case 4:
+        rgb.r = T;
+        rgb.g = P;
+        rgb.b = 255;
+        break;
+    case 5:
+        rgb.r = 255;
+        rgb.g = P;
+        rgb.b = Q;
+        break;
+    default:
+        break;
+    }
+
+    rgb.r = rgb.r * 255 / 100;
+    rgb.g = rgb.g * 255 / 100;
+    rgb.b = rgb.b * 255 / 100;
+
+    return rgb;
+}
+
+const HS_t temp_table[] = {
+    {4, 100},  {8, 100},  {11, 100}, {14, 100}, {16, 100}, {18, 100}, {20, 100}, {22, 100}, {24, 100}, {25, 100},
+    {27, 100}, {28, 100}, {30, 100}, {31, 100}, {31, 95},  {30, 89},  {30, 85},  {29, 80},  {29, 76},  {29, 73},
+    {29, 69},  {28, 66},  {28, 63},  {28, 60},  {28, 57},  {28, 54},  {28, 52},  {27, 49},  {27, 47},  {27, 45},
+    {27, 43},  {27, 41},  {27, 39},  {27, 37},  {27, 35},  {27, 33},  {27, 31},  {27, 30},  {27, 28},  {27, 26},
+    {27, 25},  {27, 23},  {27, 22},  {27, 21},  {27, 19},  {27, 18},  {27, 17},  {27, 15},  {28, 14},  {28, 13},
+    {28, 12},  {29, 10},  {29, 9},   {30, 8},   {31, 7},   {32, 6},   {34, 5},   {36, 4},   {41, 3},   {49, 2},
+    {0, 0},    {294, 2},  {265, 3},  {251, 4},  {242, 5},  {237, 6},  {233, 7},  {231, 8},  {229, 9},  {228, 10},
+    {227, 11}, {226, 11}, {226, 12}, {225, 13}, {225, 13}, {224, 14}, {224, 14}, {224, 15}, {224, 15}, {223, 16},
+    {223, 16}, {223, 17}, {223, 17}, {223, 17}, {222, 18}, {222, 18}, {222, 19}, {222, 19}, {222, 19}, {222, 19},
+    {222, 20}, {222, 20}, {222, 20}, {222, 21}, {222, 21}};
+
+static HS_t convert_temperature_to_hue_saturation(uint32_t temperature) {
+    HS_t hs;
+    if (temperature < 600) {
+        hs.hue = 0;
+        hs.saturation = 100;
+        return hs;
+    } else if (temperature > 10000) {
+        hs.hue = 222;
+        hs.saturation = 21 + (temperature - 10000) * 41 / 990000;
+        return hs;
+    } else {
+        hs.hue = temp_table[(temperature - 600) / 100].hue;
+        hs.saturation = temp_table[(temperature - 600) / 100].saturation;
+    }
+    return hs;
+}
+
 CWS2812Ctrl::CWS2812Ctrl()
 {
     m_gpio_pin_no = 0;
     m_task_keepalive = true;
     m_brightness = 0;
-    m_common_color = RGB();
+    m_common_color = RGB_t();
+    m_hue_saturation = HS_t();
     m_blink_duration_ms = 0;
     m_blink_count = 0;
 }
@@ -77,7 +160,7 @@ bool CWS2812Ctrl::initialize(uint8_t gpio_pin_no, uint16_t pixel_cnt)
     ledc_ch_cfg.timer_sel = LEDC_TIMER_0;
     ledc_ch_cfg.duty = 0;
     ledc_ch_cfg.hpoint = 0;
-    ledc_ch_cfg.flags.output_invert = 1;
+    ledc_ch_cfg.flags.output_invert = 0;
     
     ledc_channel_config(&ledc_ch_cfg);
 
@@ -172,7 +255,7 @@ static void IRAM_ATTR set_databit_high(uint8_t pin_no)
     "nop; nop; nop; nop; nop; nop; nop; nop;");
 }
 
-static uint32_t convert_rgb_to_u32(RGB rgb) 
+static uint32_t convert_rgb_to_u32(RGB_t rgb) 
 {
     return ((uint32_t)rgb.g) << 16 | ((uint32_t)rgb.r) << 8 | (uint32_t)rgb.b;
 }
@@ -240,7 +323,7 @@ uint8_t CWS2812Ctrl::get_brightness()
     return m_brightness;
 }
 
-RGB CWS2812Ctrl::get_common_color()
+RGB_t CWS2812Ctrl::get_common_color()
 {
     return m_common_color;
 }
@@ -256,6 +339,27 @@ bool CWS2812Ctrl::set_common_color(uint8_t red, uint8_t green, uint8_t blue, boo
 
     GetLogger(eLogType::Info)->Log("set common color(%d,%d,%d)", red, green, blue);
     return set_pixel_rgb_value(LED_SET_ALL, red, green, blue, true);
+}
+
+bool CWS2812Ctrl::set_hue(uint16_t hue)
+{
+    m_hue_saturation.hue = hue;
+    RGB_t rgb_conv = convert_hue_saturation_to_rgb(m_hue_saturation);
+    return set_common_color(rgb_conv.r, rgb_conv.g, rgb_conv.b);
+}
+
+bool CWS2812Ctrl::set_saturation(uint8_t saturation)
+{
+    m_hue_saturation.saturation = saturation;
+    RGB_t rgb_conv = convert_hue_saturation_to_rgb(m_hue_saturation);
+    return set_common_color(rgb_conv.r, rgb_conv.g, rgb_conv.b);
+}
+
+bool CWS2812Ctrl::set_temperature(uint32_t temperature)
+{
+    m_hue_saturation = convert_temperature_to_hue_saturation(temperature);
+    RGB_t rgb_conv = convert_hue_saturation_to_rgb(m_hue_saturation);
+    return set_common_color(rgb_conv.r, rgb_conv.g, rgb_conv.b);
 }
 
 bool CWS2812Ctrl::blink(uint32_t duration_ms/*=1000*/, uint32_t count/*=1*/)
@@ -304,7 +408,7 @@ void CWS2812Ctrl::func_command(void *param)
         if (xQueueReceive(obj->m_queue_command, (void *)&cmd_type, pdMS_TO_TICKS(WS2812_REFRESH_TIME_MS)) == pdTRUE) {
             if (*cmd_type == SETRGB) {
                 for (size_t i = 0; i < obj->m_pixel_values.size(); i++) {
-                    RGB rgb = obj->m_pixel_values[i];
+                    RGB_t rgb = obj->m_pixel_values[i];
                     obj->m_pixel_conv_values[i] = convert_rgb_to_u32(rgb);
                 }
             } else if (*cmd_type == BLINK) {
@@ -339,26 +443,26 @@ void CWS2812Ctrl::func_command(void *param)
         
         if (blink_demo) {
             if (obj->m_blink_count > 0) {
-                RGB rgb;
+                RGB_t rgb;
                 uint32_t rm = obj->m_blink_count % 8;
                 if (rm == 0) {
-                    rgb = RGB(255, 0, 0);
+                    rgb = RGB_t(255, 0, 0);
                 } else if (rm == 1) {
-                    rgb = RGB(0, 255, 0);
+                    rgb = RGB_t(0, 255, 0);
                 } else if (rm == 2) {
-                    rgb = RGB(0, 0, 255);
+                    rgb = RGB_t(0, 0, 255);
                 } else if (rm == 3) {
-                    rgb = RGB(255, 255, 0);
+                    rgb = RGB_t(255, 255, 0);
                 } else if (rm == 4) {
-                    rgb = RGB(255, 0, 255);
+                    rgb = RGB_t(255, 0, 255);
                 } else if (rm == 5) {
-                    rgb = RGB(0, 255, 255);
+                    rgb = RGB_t(0, 255, 255);
                 } else if (rm == 6) {
-                    rgb = RGB(255, 70, 0);
+                    rgb = RGB_t(255, 70, 0);
                 } else if (rm == 7) {
-                    rgb = RGB(0, 128, 0);
+                    rgb = RGB_t(0, 128, 0);
                 } else {
-                    rgb = RGB(255, 255, 255);
+                    rgb = RGB_t(255, 255, 255);
                 }
 
                 for (size_t i = 0; i < obj->m_pixel_values.size(); i++) {

@@ -31,7 +31,7 @@ bool CDeviceLevelControlLight::matter_add_endpoint()
         return false;
     }
 
-    return CDevice::matter_add_endpoint();;
+    return CDevice::matter_add_endpoint();
 }
 
 bool CDeviceLevelControlLight::matter_init_endpoint()

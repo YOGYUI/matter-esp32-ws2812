@@ -18,6 +18,8 @@ protected:
     uint16_t m_endpoint_id;
     bool m_state_onoff;
     uint8_t m_state_brightness;
+    uint8_t m_state_hue;
+    uint8_t m_state_saturation;
 
 public:
     virtual bool matter_add_endpoint();

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 set(ENV{ESP_MATTER_DEVICE_PATH} $ENV{ESP_MATTER_PATH}/device_hal/device/esp32_devkit_c)
-set(PROJECT_VER "v0.1")
-set(PROJECT_VER_NUMBER 1)
+set(PROJECT_VER "1.0.0.0")
+set(PROJECT_VER_NUMBER 20230529)
 
 set(ESP_MATTER_PATH $ENV{ESP_MATTER_PATH})
 set(MATTER_SDK_PATH ${ESP_MATTER_PATH}/connectedhomeip/connectedhomeip)
