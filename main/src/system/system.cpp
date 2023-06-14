@@ -89,7 +89,7 @@ bool CSystem::initialize()
     // esp_matter::console::diagnostics_register_commands();
     // esp_matter::console::init();
 
-    GetWS2812Ctrl()->initialize(GPIO_PIN_WS2812_DATA, WS2812_ARRAY_COUNT);
+    GetWS2812Ctrl()->initialize();
     // set matter endpoints
     CDevice *dev = nullptr;
 #if LIGHT_TYPE == 0
@@ -252,6 +252,9 @@ void CSystem::factory_reset()
     if (ret != ESP_OK) {
         GetLogger(eLogType::Error)->Log("Failed to matter factory reset (ret: %d)", ret);
     }
+
+    GetWS2812Ctrl()->set_brightness(0);
+    GetWS2812Ctrl()->set_common_color(0, 0, 0);
 }
 
 void CSystem::print_system_info()

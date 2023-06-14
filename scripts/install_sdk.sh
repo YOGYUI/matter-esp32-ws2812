@@ -38,7 +38,7 @@ bash ./install.sh
 cd ${sdk_path}
 git clone --depth 1 https://github.com/espressif/esp-matter.git esp-matter
 cd ${esp_matter_path}
-git reset --hard b40bf8e398161bcac515fd57eb13d14e031e3a91
+git reset --hard f8105768252e89dd6bd5b5bb9b0f3f2118b0edff
 git submodule update --init --depth 1
 cd ./connectedhomeip/connectedhomeip
 if [[ "$OSTYPE" == "darwin"* ]]; then

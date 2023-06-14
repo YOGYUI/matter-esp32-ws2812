@@ -110,8 +110,8 @@ bool CMemory::save_ws2812_brightness(const uint8_t brightness)
 
 bool CMemory::load_ws2812_color(uint8_t *red, uint8_t *green, uint8_t *blue)
 {
-    RGB_t rgb;
-    if (read_nvs("ws2812_rgb", &rgb, sizeof(RGB_t))) {
+    rgb_t rgb;
+    if (read_nvs("ws2812_rgb", &rgb, sizeof(rgb_t))) {
         GetLogger(eLogType::Info)->Log("load <ws2812 rgb> from memory");
         *red = rgb.r;
         *green = rgb.g;
@@ -125,8 +125,8 @@ bool CMemory::load_ws2812_color(uint8_t *red, uint8_t *green, uint8_t *blue)
 
 bool CMemory::save_ws2812_color(const uint8_t red, uint8_t green, uint8_t blue)
 {
-    RGB_t rgb = RGB_t(red, green, blue);
-    if (write_nvs("ws2812_rgb", &rgb, sizeof(RGB_t))) {
+    rgb_t rgb = rgb_t(red, green, blue);
+    if (write_nvs("ws2812_rgb", &rgb, sizeof(rgb_t))) {
         GetLogger(eLogType::Info)->Log("save <ws2812 rgb> to memory");
     } else {
         return false;

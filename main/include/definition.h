@@ -30,7 +30,7 @@
  * 1 = level control
  * 2 = color control
  */
-#define LIGHT_TYPE  1
+#define LIGHT_TYPE  2
 
 /**
  * 0 = Hue and Saturation
