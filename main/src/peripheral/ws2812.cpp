@@ -178,7 +178,7 @@ bool CWS2812Ctrl::init_rmt()
     esp_err_t ret;
 
     rmt_tx_channel_config_t rmt_tx_ch_cfg;
-    rmt_tx_ch_cfg.gpio_num = GPIO_PIN_WS2812_DATA;
+    rmt_tx_ch_cfg.gpio_num = (gpio_num_t)GPIO_PIN_WS2812_DATA;
     rmt_tx_ch_cfg.clk_src = RMT_CLK_SRC_DEFAULT;
     rmt_tx_ch_cfg.resolution_hz = RMT_RESOLUTION_HZ;
     rmt_tx_ch_cfg.mem_block_symbols = 64;

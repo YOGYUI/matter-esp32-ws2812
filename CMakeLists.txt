@@ -6,7 +6,6 @@ set(PROJECT_VER_NUMBER 20230529)
 
 set(ESP_MATTER_PATH $ENV{ESP_MATTER_PATH})
 set(MATTER_SDK_PATH ${ESP_MATTER_PATH}/connectedhomeip/connectedhomeip)
-set(ZAP_GENERATED_PATH ${CMAKE_CURRENT_LIST_DIR}/main/zap-generated)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 include($ENV{ESP_MATTER_DEVICE_PATH}/esp_matter_device.cmake)
@@ -20,8 +19,10 @@ set(EXTRA_COMPONENT_DIRS
 )
 
 project(yogyui-matter-esp32-ws2812)
-idf_build_set_property(CXX_COMPILE_OPTIONS "-std=gnu++14;-Os" APPEND)
+idf_build_set_property(CXX_COMPILE_OPTIONS "-std=gnu++17;-Os" APPEND)
+idf_build_set_property(CXX_COMPILE_OPTIONS "-Os" APPEND)
 idf_build_set_property(CXX_COMPILE_OPTIONS "-DCHIP_HAVE_CONFIG_H" APPEND)
+idf_build_set_property(CXX_COMPILE_OPTIONS "-fpermissive" APPEND)
 idf_build_set_property(C_COMPILE_OPTIONS "-Os" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-Wno-unused-function" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-Wno-format-nonliteral" APPEND)

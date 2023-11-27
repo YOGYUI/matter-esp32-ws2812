@@ -14,7 +14,7 @@ sdk_path=~/tools  # change to your own sdk path
 esp_idf_path=${sdk_path}/esp-idf
 esp_matter_path=${sdk_path}/esp-matter
 chip_path=${esp_matter_path}/connectedhomeip/connectedhomeip
-zap_path=${sdk_path}/esp-matter/.zap
+zap_path=${chip_path}/.environment/cipd/packages/zap
 
 source ${esp_idf_path}/export.sh
 source ${esp_matter_path}/export.sh

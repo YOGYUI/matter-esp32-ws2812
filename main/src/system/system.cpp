@@ -5,7 +5,6 @@
 #include "util.h"
 #include "cJSON.h"
 #include <nvs_flash.h>
-#include <esp_matter_core.cpp>  // include definition to config nvs
 #include <esp_matter_bridge.h>
 #include <esp_matter_feature.h>
 #include <esp_netif.h>
@@ -13,6 +12,8 @@
 #include <esp_chip_info.h>
 #include <esp_flash.h>
 #include <esp_app_desc.h>
+#include <app/server/Server.h>
+#include <esp_matter_providers.h>
 #include "ws2812.h"
 #include "device_onoff_light.h"
 #include "device_levelcontrol_light.h"
@@ -21,6 +22,11 @@
 CSystem* CSystem::_instance = nullptr;
 bool CSystem::m_default_btn_pressed_long = false;
 bool CSystem::m_commisioning_session_working = false;
+
+typedef struct matter_node {
+    void *endpoint_list;
+    uint16_t min_unused_endpoint_id;
+} matter_node_t;
 
 CSystem::CSystem() 
 {
@@ -322,17 +328,11 @@ void CSystem::print_matter_endpoints_info()
 
 bool CSystem::matter_set_min_endpoint_id(uint16_t endpoint_id)
 {
-    nvs_handle_t handle;
-    esp_err_t err = nvs_open_from_partition(ESP_MATTER_NVS_PART_NAME, ESP_MATTER_NVS_NODE_NAMESPACE, NVS_READWRITE, &handle);
-    if (err == ESP_OK) {
-        err = nvs_set_u16(handle, "min_uu_ep_id", endpoint_id);
-        nvs_commit(handle);
-        nvs_close(handle);
-        GetLogger(eLogType::Info)->Log("Set minimum endpoint id as %d", endpoint_id);
-    } else {
-        GetLogger(eLogType::Warning)->Log("Failed to open node nvs: cannot reset min_uu_ep_id");
+    if (!m_root_node)
         return false;
-    }
+    matter_node_t *temp = (matter_node_t *)m_root_node;
+    temp->min_unused_endpoint_id = endpoint_id;
+    GetLogger(eLogType::Info)->Log("Set minimum endpoint id as %u", endpoint_id);
     return true;
 }
 
@@ -351,6 +351,7 @@ bool CSystem::matter_align_endpoint_id()
         }
         endpoint = esp_matter::endpoint::get_next(endpoint);
     }
+    GetLogger(eLogType::Info)->Log("Current max endpoint id is %u", max_endpoint_id);
 
     return matter_set_min_endpoint_id(max_endpoint_id + 1);
 }

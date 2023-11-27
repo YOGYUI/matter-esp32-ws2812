@@ -7,10 +7,11 @@ Matter 조명(Light) 예제 프로젝트<br>
 
 SDK
 ---
-- esp-idf: [v5.0.1](https://github.com/espressif/esp-idf/tree/v5.0.1)
-- esp-matter: [f8105768252e89dd6bd5b5bb9b0f3f2118b0edff](https://github.com/espressif/esp-matter/commit/f8105768252e89dd6bd5b5bb9b0f3f2118b0edff)
-- connectedhomeip: [04b2fdfc6f7259116a50170b0d38dab9507e20d3](https://github.com/project-chip/connectedhomeip/commit/04b2fdfc6f7259116a50170b0d38dab9507e20d3)
+- esp-idf: [6b1f40b9bfb91ec82fab4a60e5bfb4ca0c9b062f](https://github.com/espressif/esp-idf/tree/6b1f40b9bfb91ec82fab4a60e5bfb4ca0c9b062f)
+- esp-matter: [b2a6701ac6f41a2fdd1549b37f4b58aeab6e0b11](https://github.com/espressif/esp-matter/commit/b2a6701ac6f41a2fdd1549b37f4b58aeab6e0b11)
+- connectedhomeip: [181b0cb14ff007ec912f2ba6627e05dfb066c008](https://github.com/project-chip/connectedhomeip/commit/181b0cb14ff007ec912f2ba6627e05dfb066c008)
   - Matter 1.1 released (2023.05.18)
+  - Matter 1.2 released (2023.10.23)
 
 Helper Script
 ---
