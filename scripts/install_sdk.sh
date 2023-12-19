@@ -8,7 +8,7 @@ cur_path=${PWD}
 if [[ "$OSTYPE" == "darwin"* ]]; then
     project_path=$(dirname $(dirname $(realpath $0)))
 else 
-    project_path=$(dirname $(dirname $(realpath $BASH_SOURCE)))
+    project_path=$(dirname $(dirname $(realpath $cur_path)))
 fi
 
 # sdk_path=${project_path}/sdk
